@@ -27,7 +27,7 @@ npm run dev:local
 ## 호스팅 Supabase에 연결하기
 
 1. Supabase 프로젝트에서 Anonymous Sign-Ins를 활성화한다. 예상 동시 입장자 수와 행사장 공용 Wi-Fi를 고려해 익명 인증 요청 제한을 확인한다.
-2. 로컬 CLI를 해당 프로젝트에 연결한 후 `npx supabase db push`로 마이그레이션을 적용한다.
+2. 로컬 CLI를 해당 프로젝트에 연결한 후 `npx supabase db push --remote`로 마이그레이션을 적용한다.
 3. SQL Editor에서 아래 쿼리를 한 번 실행해 운영 링크용 키를 발급한다. 결과의 키를 복사해 `https://배포주소/admin#key=발급값`으로 운영진에게 전달한다.
 
    ```sql
@@ -51,7 +51,7 @@ npm run dev:local
 3. 첫 빌드 전에 Production 환경에 위 두 `VITE_` 값을 등록한다. URL에는 호스팅 Supabase의 HTTPS 프로젝트 주소를 사용한다. 환경값을 바꾸면 다시 빌드한다.
 4. 배포된 HTTPS 주소의 `/admin`에 운영 링크로 접속해 참가용 QR을 연다. QR은 현재 사이트 주소에서 생성된다. 휴대폰의 Wi-Fi를 끄고 QR로 접속해 체크인한 뒤 운영 화면에 인원이 반영되는지 확인한다.
 
-`vercel.json`은 운영 링크의 `/admin` 요청을 `/index.html`로 연결한다. Git 저장소 연동 시 프론트 변경은 자동으로 재배포되고, DB 변경은 호스팅 프로젝트에 `npx supabase db push`로 별도 적용한다. [Vercel의 Vite 배포 문서](https://vercel.com/docs/frameworks/frontend/vite)
+`vercel.json`은 운영 링크의 `/admin` 요청을 `/index.html`로 연결한다. Git 저장소 연동 시 프론트 변경은 자동으로 재배포되고, DB 변경은 호스팅 프로젝트에 `npx supabase db push --remote`로 별도 적용한다. [Vercel의 Vite 배포 문서](https://vercel.com/docs/frameworks/frontend/vite)
 
 ## 검증
 
