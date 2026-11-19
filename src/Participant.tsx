@@ -5,8 +5,8 @@ import type { Cohort, EventState } from "./event";
 import { SeatMap } from "./SeatMap";
 
 type Props = { event: EventState; run: Action; busy: boolean };
-type Tab = "내 자리" | "익명 Q&A";
-const tabs: Tab[] = ["내 자리", "익명 Q&A"];
+type Tab = "내 자리" | "익명 Q&A" | "럭키 드로우";
+const tabs: Tab[] = ["내 자리", "익명 Q&A", "럭키 드로우"];
 
 // getRandomValues also works on a phone opening the local network preview over HTTP.
 function requestId() {
@@ -89,6 +89,7 @@ export function Participant({ event, run, busy }: Props) {
     [group, setGroup] = useState<Cohort>();
   const { me } = event;
   const table = event.tables.find((t) => t.num === me?.room);
+  const won = event.draws.find((d) => d.num === me?.num);
   return (
     <>
       <header>
@@ -137,9 +138,35 @@ export function Participant({ event, run, busy }: Props) {
           ) : (
             <Questions event={event} run={run} busy={busy} />
           )
+        ) : tab === "럭키 드로우" ? (
+          <>
+            <h1>럭키 드로우</h1>
+            {event.ended && <p>행사가 종료되었어요.</p>}
+            {event.draws.length === 0 ? (
+              <p className="status">아직 추첨 결과가 없어요.</p>
+            ) : (
+              <>
+                <section className="wash">
+                  <p className="eyeline">{event.draws[0].seq}회차 당첨번호</p>
+                  <strong className="winner">
+                    {numberLabel(event.draws[0].num)}
+                  </strong>
+                </section>
+                {won ? (
+                  <p className="winning" role="status">
+                    {won.seq}회차에 당첨되었어요! 참가번호 화면을 운영진에게
+                    보여주세요.
+                  </p>
+                ) : (
+                  <p>내 참가번호는 {numberLabel(me.num)}번이에요.</p>
+                )}
+              </>
+            )}
+          </>
         ) : event.ended ? (
           <>
             <h1>행사가 종료되었어요.</h1>
+            <p>럭키 드로우에서 당첨 결과를 확인할 수 있어요.</p>
           </>
         ) : !me.active ? (
           <>

@@ -7,8 +7,8 @@ import { assign } from "./assign";
 import { SeatMap } from "./SeatMap";
 
 type Props = { event: EventState; staff: Staff; run: Action; busy: boolean };
-type Panel = "현장 진행" | "익명 Q&A";
-const panels: Panel[] = ["현장 진행", "익명 Q&A"];
+type Panel = "현장 진행" | "익명 Q&A" | "럭키 드로우";
+const panels: Panel[] = ["현장 진행", "익명 Q&A", "럭키 드로우"];
 
 export function Host({ event, staff, run, busy }: Props) {
   const [panel, setPanel] = useState<Panel>("현장 진행");
@@ -18,6 +18,9 @@ export function Host({ event, staff, run, busy }: Props) {
   const active = staff.members.filter((m) => m.active);
   const ob = active.filter((m) => m.cohort === "OB").length;
   const totalSeats = event.tables.reduce((sum, t) => sum + t.capacity, 0);
+  const eligible = active.filter(
+    (m) => !event.draws.some((d) => d.num === m.num),
+  ).length;
   const seats = staff.history.filter((s) => s.round_no === event.round);
   const disabled = busy || event.ended;
   const joinUrl = new URL("/", location.origin).href;
@@ -224,6 +227,53 @@ export function Host({ event, staff, run, busy }: Props) {
                   )}
                 </article>
               ))}
+          </>
+        )}
+        {panel === "럭키 드로우" && (
+          <>
+            <section className="wash">
+              <p className="round">
+                {event.draws.length
+                  ? `${event.draws[0].seq}회차 당첨번호`
+                  : "첫 추첨 대기"}
+              </p>
+              {event.draws.length > 0 && (
+                <strong className="winner">
+                  {numberLabel(event.draws[0].num)}
+                </strong>
+              )}
+              <p>
+                추첨 가능 인원  <b>{eligible}명</b>
+              </p>
+              <button
+                className="primary"
+                disabled={disabled || !eligible}
+                onClick={() => {
+                  if (
+                    !event.draws.length ||
+                    confirm(
+                      "현재 당첨 결과를 확인했나요? 다음 한 명을 추첨합니다.",
+                    )
+                  )
+                    void run(() =>
+                      operate("draw", { expected: event.draws.length }),
+                    );
+                }}
+              >
+                {event.draws.length ? "다음 한 명 추첨" : "한 명 추첨"}
+              </button>
+              {!eligible && <p>추첨할 참가자가 없어요.</p>}
+            </section>
+            <h2>당첨 이력</h2>
+            {!event.draws.length && <p>아직 당첨자가 없어요.</p>}
+            <ul>
+              {event.draws.map((d) => (
+                <li key={d.seq}>
+                  <span>{d.seq}회차</span>
+                  <strong>{numberLabel(d.num)}번</strong>
+                </li>
+              ))}
+            </ul>
           </>
         )}
         <footer>
