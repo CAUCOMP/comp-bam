@@ -7,12 +7,14 @@ import { assign } from "./assign";
 import { SeatMap } from "./SeatMap";
 
 type Props = { event: EventState; staff: Staff; run: Action; busy: boolean };
-type Panel = "현장 진행";
-const panels: Panel[] = ["현장 진행"];
+type Panel = "현장 진행" | "익명 Q&A";
+const panels: Panel[] = ["현장 진행", "익명 Q&A"];
 
 export function Host({ event, staff, run, busy }: Props) {
   const [panel, setPanel] = useState<Panel>("현장 진행");
   const [qr, setQr] = useState(false);
+  const [filter, setFilter] =
+    useState<Staff["questions"][number]["state"]>("pending");
   const active = staff.members.filter((m) => m.active);
   const ob = active.filter((m) => m.cohort === "OB").length;
   const totalSeats = event.tables.reduce((sum, t) => sum + t.capacity, 0);
@@ -158,6 +160,70 @@ export function Host({ event, staff, run, busy }: Props) {
                 </ul>
               </section>
             </div>
+          </>
+        )}
+        {panel === "익명 Q&A" && (
+          <>
+            <div className="setting">
+              <span>{event.open ? "질문 접수 중" : "질문 접수 마감"}</span>
+              <button
+                disabled={disabled}
+                onClick={() =>
+                  run(() => operate("reception", { open: !event.open }))
+                }
+              >
+                {event.open ? "접수 마감" : "접수 열기"}
+              </button>
+            </div>
+            <div className="filters">
+              {(["pending", "answered", "hidden"] as const).map((s, i) => (
+                <button
+                  key={s}
+                  aria-pressed={filter === s}
+                  onClick={() => setFilter(s)}
+                >
+                  {["답변 대기", "완료", "숨김"][i]}{" "}
+                  {staff.questions.filter((q) => q.state === s).length}
+                </button>
+              ))}
+            </div>
+            {!staff.questions.some((q) => q.state === filter) && (
+              <p className="status">이 목록에 질문이 없어요.</p>
+            )}
+            {staff.questions
+              .filter((q) => q.state === filter)
+              .map((q) => (
+                <article key={q.id}>
+                  <p>{q.body}</p>
+                  {q.state === "pending" && (
+                    <div className="actions">
+                      <button
+                        disabled={disabled}
+                        onClick={() =>
+                          run(() =>
+                            operate("moderate", {
+                              id: q.id,
+                              state: "answered",
+                            }),
+                          )
+                        }
+                      >
+                        답변 완료
+                      </button>
+                      <button
+                        disabled={disabled}
+                        onClick={() =>
+                          run(() =>
+                            operate("moderate", { id: q.id, state: "hidden" }),
+                          )
+                        }
+                      >
+                        숨기기
+                      </button>
+                    </div>
+                  )}
+                </article>
+              ))}
           </>
         )}
         <footer>

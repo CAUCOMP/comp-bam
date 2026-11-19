@@ -1,13 +1,89 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Action } from "./main";
-import { checkIn, numberLabel } from "./event";
+import { checkIn, numberLabel, sendQuestion } from "./event";
 import type { Cohort, EventState } from "./event";
 import { SeatMap } from "./SeatMap";
 
 type Props = { event: EventState; run: Action; busy: boolean };
-type Tab = "내 자리";
-const tabs: Tab[] = ["내 자리"];
+type Tab = "내 자리" | "익명 Q&A";
+const tabs: Tab[] = ["내 자리", "익명 Q&A"];
 
+// getRandomValues also works on a phone opening the local network preview over HTTP.
+function requestId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const str = Array.from(bytes, (x) => x.toString(16).padStart(2, "0")).join(
+    "",
+  );
+  return [
+    str.slice(0, 8),
+    str.slice(8, 12),
+    str.slice(12, 16),
+    str.slice(16, 20),
+    str.slice(20),
+  ].join("-");
+}
+function Questions({ event, run, busy }: Props) {
+  const [draft, setDraft] = useState(""),
+    [sent, setSent] = useState(false);
+  const id = useRef("");
+  if (!event.open || event.ended)
+    return (
+      <>
+        <h1>익명 Q&A</h1>
+        <p className="status">지금은 질문을 받지 않아요.</p>
+      </>
+    );
+  if (sent)
+    return (
+      <>
+        <h1>익명 Q&A</h1>
+        <section className="wash">
+          <h2>질문을 보냈어요.</h2>
+          <p>운영진이 현장에서 답변할 예정이에요.</p>
+        </section>
+        <button onClick={() => setSent(false)}>다른 질문 작성</button>
+      </>
+    );
+  return (
+    <>
+      <h1>익명 Q&A</h1>
+      <p>운영진만 질문을 읽고 현장에서 답해요.</p>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!draft.trim()) return;
+          id.current ||= requestId();
+          if (await run(() => sendQuestion(id.current, draft.trim()))) {
+            setSent(true);
+            setDraft("");
+            id.current = "";
+          }
+        }}
+      >
+        <label htmlFor="question">질문 내용</label>
+        <textarea
+          id="question"
+          maxLength={500}
+          rows={5}
+          disabled={busy}
+          required
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            id.current = "";
+          }}
+          placeholder="운영진에게 궁금한 점을 적어 주세요."
+        />
+        <p className="muted">참가번호와 OB/YB는 질문에 표시되지 않아요.</p>
+        <button className="primary" disabled={!draft.trim() || busy}>
+          익명으로 질문 보내기
+        </button>
+      </form>
+    </>
+  );
+}
 export function Participant({ event, run, busy }: Props) {
   const [tab, setTab] = useState<Tab>("내 자리"),
     [group, setGroup] = useState<Cohort>();
@@ -17,7 +93,7 @@ export function Participant({ event, run, busy }: Props) {
     <>
       <header>
         <strong>{event.title}</strong>
-        {me && (
+        {me && tab !== "익명 Q&A" && (
           <span>참가번호  {numberLabel(me.num)}</span>
         )}
       </header>
@@ -54,6 +130,12 @@ export function Participant({ event, run, busy }: Props) {
                 참가번호 받고 입장하기
               </button>
             </>
+          )
+        ) : tab === "익명 Q&A" ? (
+          !me.active ? (
+            <h1>퇴장 처리되었어요.</h1>
+          ) : (
+            <Questions event={event} run={run} busy={busy} />
           )
         ) : event.ended ? (
           <>
