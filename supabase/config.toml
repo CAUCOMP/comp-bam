@@ -1,0 +1,17 @@
+project_id = "comp-bam"
+[api]
+enabled = true
+port = 55431
+schemas = ["public"]
+[db]
+port = 55432
+shadow_port = 55430
+major_version = 17
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+enable_anonymous_sign_ins = true
+[auth.rate_limit]
+anonymous_users = 120
+[db.seed]
+enabled = false
