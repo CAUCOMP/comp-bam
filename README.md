@@ -46,7 +46,7 @@ npm run dev:local
 
 ### Vercel로 프론트 배포하기
 
-1. 커밋된 `main`을 원격 저장소에 푸시하고 Vercel에서 GitHub 저장소를 가져온다. Framework Preset은 Vite를 선택한다.
+1. `CAUCOMP/comp-bam`의 `main`에 푸시하면 연결된 Vercel 프로젝트 `tony-ef78/comp-bam`이 Vite 빌드를 시작한다. 빌드가 성공하면 [운영 사이트](https://comp-bam.vercel.app/)에 반영된다.
 2. 프로덕션 브랜치를 `main`, 프로젝트 루트를 저장소 루트, 빌드 명령을 `npm run build`, 출력 디렉토리를 `dist`로 지정한다. Node.js는 프로젝트의 로컬 실행 요건에 맞춘다.
 3. 첫 빌드 전에 Production 환경에 위 두 `VITE_` 값을 등록한다. URL에는 호스팅 Supabase의 HTTPS 프로젝트 주소를 사용한다. 환경값을 바꾸면 다시 빌드한다.
 4. 배포된 HTTPS 주소의 `/admin`에 운영 링크로 접속해 참가용 QR을 연다. QR은 현재 사이트 주소에서 생성된다. 휴대폰의 Wi-Fi를 끄고 QR로 접속해 체크인한 뒤 운영 화면에 인원이 반영되는지 확인한다.
