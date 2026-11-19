@@ -44,14 +44,14 @@ npm run dev:local
 
 키를 다시 발급하면 이전 초대 링크가 무효화된다. 기존 브라우저의 운영 권한을 회수하려면 SQL Editor에서 해당 세션의 `bam.hosts` 행도 삭제한다.
 
-### Cloudflare Pages로 프론트 배포하기
+### Vercel로 프론트 배포하기
 
-1. 커밋된 `main`을 원격 저장소에 푸시하고 Cloudflare Pages에서 이 저장소를 연결한다.
+1. 커밋된 `main`을 원격 저장소에 푸시하고 Vercel에서 GitHub 저장소를 가져온다. Framework Preset은 Vite를 선택한다.
 2. 프로덕션 브랜치를 `main`, 프로젝트 루트를 저장소 루트, 빌드 명령을 `npm run build`, 출력 디렉토리를 `dist`로 지정한다. Node.js는 프로젝트의 로컬 실행 요건에 맞춘다.
 3. 첫 빌드 전에 Production 환경에 위 두 `VITE_` 값을 등록한다. URL에는 호스팅 Supabase의 HTTPS 프로젝트 주소를 사용한다. 환경값을 바꾸면 다시 빌드한다.
 4. 배포된 HTTPS 주소의 `/admin`에 운영 링크로 접속해 참가용 QR을 연다. QR은 현재 사이트 주소에서 생성된다. 휴대폰의 Wi-Fi를 끄고 QR로 접속해 체크인한 뒤 운영 화면에 인원이 반영되는지 확인한다.
 
-현재 빌드에는 최상위 `404.html`이 없으므로 Pages의 기본 SPA 라우팅이 `/admin` 직접 접속도 처리한다. 프론트 변경은 저장소 연동으로 재배포되고, DB 변경은 호스팅 프로젝트에 `npx supabase db push`로 별도 적용한다. [Cloudflare Pages 라우팅 문서](https://developers.cloudflare.com/pages/configuration/serving-pages/)
+`vercel.json`은 운영 링크의 `/admin` 요청을 `/index.html`로 연결한다. Git 저장소 연동 시 프론트 변경은 자동으로 재배포되고, DB 변경은 호스팅 프로젝트에 `npx supabase db push`로 별도 적용한다. [Vercel의 Vite 배포 문서](https://vercel.com/docs/frameworks/frontend/vite)
 
 ## 검증
 
