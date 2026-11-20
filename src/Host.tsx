@@ -5,7 +5,7 @@ import type { EventState, Staff } from "./event";
 import type { Action } from "./main";
 import { assign } from "./assign";
 import { SeatMap } from "./SeatMap";
-import { Masthead, PassHeading, TicketPrinter, useTicketPrint } from "./Ticket";
+import { Masthead, PassHeading, TicketPreview, TicketPrinter, useTicketPrint } from "./Ticket";
 
 type Props = { event: EventState; staff: Staff; run: Action; busy: boolean };
 type Panel = "현장 진행" | "익명 Q&A" | "럭키 드로우";
@@ -253,6 +253,7 @@ export function Host({ event, staff, run, busy }: Props) {
               >
                 {event.draws.length ? "다음 한 명 추첨" : "한 명 추첨"}
               </button>
+              <TicketPreview key={latest?.seq ?? 0} disabled={busy || printing} />
               {!eligible && <p>추첨할 참가자가 없어요.</p>}
             </section>
             <h2>당첨 이력</h2>

@@ -270,6 +270,7 @@ form .muted { margin: 8px 0 17px; }
 .spark-right { right: 3%; top: 68px; font-size: 24px; }
 .paper-guide { position: absolute; left: 19%; bottom: 66px; width: 62%; height: 115px; overflow: hidden; z-index: 1; }
 .print-ticket {
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr auto;
   align-items: center;
@@ -311,7 +312,43 @@ form .muted { margin: 8px 0 17px; }
   71% { transform: translateY(20%); }
   89%, 100% { transform: translateY(0); }
 }
-@media (prefers-reduced-motion: reduce) { .printing { animation-name: none; } }
+.winner-stamp {
+  position: absolute;
+  right: 3px;
+  bottom: 16px;
+  padding: 1px 4px;
+  color: #9d3620;
+  background: var(--paper);
+  border: 2px double currentColor;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 700;
+  transform: rotate(-12deg);
+}
+.printing .winner-stamp {
+  animation: stamp-ticket ease-out both;
+  animation-duration: inherit;
+}
+@keyframes stamp-ticket {
+  0%, 88% { opacity: 0; transform: rotate(-18deg) scale(1.6); }
+  95% { opacity: 1; transform: rotate(-12deg) scale(.92); }
+  100% { opacity: 1; transform: rotate(-12deg); }
+}
+.ticket-preview {
+  width: min(380px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 18px;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--rule);
+  border-radius: 12px;
+}
+.ticket-preview::backdrop { background: rgb(25 46 36 / 65%); }
+.host .ticket-preview h2 { margin: 0 0 14px; }
+.ticket-preview .actions { margin-top: 16px; justify-content: flex-end; }
+@media (prefers-reduced-motion: reduce) {
+  .printing, .printing .winner-stamp { animation-name: none; }
+}
 @media (max-width: 650px) {
   .host-grid { grid-template-columns: 1fr; gap: 0; }
   .metrics small { font-size: 12px; }
