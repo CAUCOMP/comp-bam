@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { hostPage, readEvent } from "./event";
 import type { EventState } from "./event";
 import { Participant } from "./Participant";
+import { Masthead, PassHeading } from "./Ticket";
 import { Host } from "./Host";
 import "@fontsource/ibm-plex-sans-kr/400.css";
 import "@fontsource/ibm-plex-sans-kr/500.css";
@@ -90,10 +91,8 @@ function App() {
   if (!event)
     return (
       <main className="shell startup">
-        <header>
-          <strong>COMP인의 밤</strong>
-        </header>
-        <h1>{hostPage ? "행사 운영" : "행사 입장"}</h1>
+        <Masthead title="COMP인의 밤" />
+        <PassHeading label="심야 매표소" title={hostPage ? "행사 운영" : "행사 입장"} />
         {notice || <p role="status">행사 정보를 불러오고 있어요.</p>}
       </main>
     );

@@ -5,6 +5,7 @@ import type { EventState, Staff } from "./event";
 import type { Action } from "./main";
 import { assign } from "./assign";
 import { SeatMap } from "./SeatMap";
+import { Masthead, PassHeading, TicketPrinter, useTicketPrint } from "./Ticket";
 
 type Props = { event: EventState; staff: Staff; run: Action; busy: boolean };
 type Panel = "현장 진행" | "익명 Q&A" | "럭키 드로우";
@@ -23,18 +24,17 @@ export function Host({ event, staff, run, busy }: Props) {
   ).length;
   const seats = staff.history.filter((s) => s.round_no === event.round);
   const disabled = busy || event.ended;
+  const latest = event.draws[0];
+  const { printed, printing } = useTicketPrint(latest?.seq ?? 0, panel === "럭키 드로우");
   const joinUrl = new URL("/", location.origin).href;
   return (
     <>
-      <header>
-        <div>
-          <strong>{event.title}</strong>
-          <span className="operator">운영진</span>
-        </div>
+      <Masthead title={event.title}>
+        <span className="operator">운영진</span>
         <button aria-expanded={qr} onClick={() => setQr(!qr)}>
           {qr ? "QR 닫기" : "참가용 QR"}
         </button>
-      </header>
+      </Masthead>
       {qr && (
         <section className="qr">
           <h2>참가용 QR</h2>
@@ -66,7 +66,7 @@ export function Host({ event, staff, run, busy }: Props) {
       </nav>
       <main>
         <div className="heading">
-          <h1>{panel}</h1>
+          <PassHeading label="심야 매표소 / 운영진" title={panel} />
           <span>
             {event.ended
               ? "행사 종료"
@@ -231,23 +231,14 @@ export function Host({ event, staff, run, busy }: Props) {
         )}
         {panel === "럭키 드로우" && (
           <>
-            <section className="wash">
-              <p className="round">
-                {event.draws.length
-                  ? `${event.draws[0].seq}회차 당첨번호`
-                  : "첫 추첨 대기"}
-              </p>
-              {event.draws.length > 0 && (
-                <strong className="winner">
-                  {numberLabel(event.draws[0].num)}
-                </strong>
-              )}
+            <TicketPrinter draw={latest} printing={printing} ended={event.ended} />
+            <section className="draw-controls">
               <p>
                 추첨 가능 인원  <b>{eligible}명</b>
               </p>
               <button
                 className="primary"
-                disabled={disabled || !eligible}
+                disabled={disabled || printing || !eligible}
                 onClick={() => {
                   if (
                     !event.draws.length ||
@@ -267,7 +258,7 @@ export function Host({ event, staff, run, busy }: Props) {
             <h2>당첨 이력</h2>
             {!event.draws.length && <p>아직 당첨자가 없어요.</p>}
             <ul>
-              {event.draws.map((d) => (
+              {event.draws.filter((d) => d.seq <= printed).map((d) => (
                 <li key={d.seq}>
                   <span>{d.seq}회차</span>
                   <strong>{numberLabel(d.num)}번</strong>

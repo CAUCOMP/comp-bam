@@ -3,6 +3,7 @@ import type { Action } from "./main";
 import { checkIn, numberLabel, sendQuestion } from "./event";
 import type { Cohort, EventState } from "./event";
 import { SeatMap } from "./SeatMap";
+import { Masthead, PassHeading, TicketPrinter, useTicketPrint } from "./Ticket";
 
 type Props = { event: EventState; run: Action; busy: boolean };
 type Tab = "내 자리" | "익명 Q&A" | "럭키 드로우";
@@ -31,15 +32,15 @@ function Questions({ event, run, busy }: Props) {
   if (!event.open || event.ended)
     return (
       <>
-        <h1>익명 Q&A</h1>
+        <PassHeading label="QUESTION SLIP" title="익명 Q&A" />
         <p className="status">지금은 질문을 받지 않아요.</p>
       </>
     );
   if (sent)
     return (
       <>
-        <h1>익명 Q&A</h1>
-        <section className="wash">
+        <PassHeading label="QUESTION SLIP" title="익명 Q&A" />
+        <section className="wash stamped">
           <h2>질문을 보냈어요.</h2>
           <p>운영진이 현장에서 답변할 예정이에요.</p>
         </section>
@@ -48,7 +49,7 @@ function Questions({ event, run, busy }: Props) {
     );
   return (
     <>
-      <h1>익명 Q&A</h1>
+      <PassHeading label="QUESTION SLIP" title="익명 Q&A" />
       <p>운영진만 질문을 읽고 현장에서 답해요.</p>
       <form
         onSubmit={async (e) => {
@@ -90,21 +91,22 @@ export function Participant({ event, run, busy }: Props) {
   const { me } = event;
   const table = event.tables.find((t) => t.num === me?.room);
   const won = event.draws.find((d) => d.num === me?.num);
+  const latest = event.draws[0];
+  const { printed, printing } = useTicketPrint(latest?.seq ?? 0, !!me && tab === "럭키 드로우");
   return (
     <>
-      <header>
-        <strong>{event.title}</strong>
+      <Masthead title={event.title}>
         {me && tab !== "익명 Q&A" && (
           <span>참가번호  {numberLabel(me.num)}</span>
         )}
-      </header>
+      </Masthead>
       <main key={tab}>
         {!me ? (
           event.ended ? (
-            <h1>행사가 종료되었어요.</h1>
+            <PassHeading label="BOX OFFICE CLOSED" title="행사가 종료되었어요." />
           ) : (
             <>
-              <h1>행사 입장</h1>
+              <PassHeading label="ADMIT ONE" title="행사 입장" />
               <SeatMap tables={event.tables} />
               <fieldset>
                 <legend>어느 쪽으로 참여하시나요?</legend>
@@ -128,55 +130,43 @@ export function Participant({ event, run, busy }: Props) {
                 disabled={!group || busy}
                 onClick={() => group && run(() => checkIn(group))}
               >
-                참가번호 받고 입장하기
+                입장권 발급 · 참가번호 받기
               </button>
             </>
           )
         ) : tab === "익명 Q&A" ? (
           !me.active ? (
-            <h1>퇴장 처리되었어요.</h1>
+            <PassHeading label="CHECKED OUT" title="퇴장 처리되었어요." />
           ) : (
             <Questions event={event} run={run} busy={busy} />
           )
         ) : tab === "럭키 드로우" ? (
           <>
-            <h1>럭키 드로우</h1>
-            {event.ended && <p>행사가 종료되었어요.</p>}
-            {event.draws.length === 0 ? (
-              <p className="status">아직 추첨 결과가 없어요.</p>
-            ) : (
-              <>
-                <section className="wash">
-                  <p className="eyeline">{event.draws[0].seq}회차 당첨번호</p>
-                  <strong className="winner">
-                    {numberLabel(event.draws[0].num)}
-                  </strong>
-                </section>
-                {won ? (
-                  <p className="winning" role="status">
-                    {won.seq}회차에 당첨되었어요! 참가번호 화면을 운영진에게
-                    보여주세요.
-                  </p>
-                ) : (
-                  <p>내 참가번호는 {numberLabel(me.num)}번이에요.</p>
-                )}
-              </>
+            <h1 className="sr-only">럭키 드로우</h1>
+            <TicketPrinter draw={latest} printing={printing} ended={event.ended} />
+            {event.ended && <p className="status">행사가 종료되었어요.</p>}
+            <div className="claim-ticket">
+              <span>내 참가번호</span><strong>{numberLabel(me.num)}</strong>
+            </div>
+            {won && won.seq <= printed && (
+              <p className="winning" role="status">
+                {won.seq}회차에 당첨되었어요! 이 화면을 운영진에게 보여주세요.
+              </p>
             )}
           </>
         ) : event.ended ? (
           <>
-            <h1>행사가 종료되었어요.</h1>
+            <PassHeading label="BOX OFFICE CLOSED" title="행사가 종료되었어요." />
             <p>럭키 드로우에서 당첨 결과를 확인할 수 있어요.</p>
           </>
         ) : !me.active ? (
           <>
-            <h1>퇴장 처리되었어요.</h1>
+            <PassHeading label="CHECKED OUT" title="퇴장 처리되었어요." />
             <p>도움이 필요하면 운영진에게 알려 주세요.</p>
           </>
         ) : table ? (
           <>
-            <p className="round">라운드 {event.round}</p>
-            <h1 className="seat-title">{numberLabel(table.num, 2)}번 테이블</h1>
+            <PassHeading label={`SEAT PASS / 라운드 ${event.round}`} title={`${numberLabel(table.num, 2)}번 테이블`} stub={numberLabel(table.num, 2)} />
             <SeatMap tables={event.tables} current={table.num} />
             <p className="direction">{table.directions}</p>
             <section className="talk">
@@ -186,8 +176,7 @@ export function Participant({ event, run, busy }: Props) {
           </>
         ) : (
           <>
-            <p className="round">체크인 완료</p>
-            <h1>자리 배정 대기 중</h1>
+            <PassHeading label="체크인 완료" title="자리 배정 대기 중" stub={numberLabel(me.num)} />
             <SeatMap tables={event.tables} />
             <p>
               {event.round
