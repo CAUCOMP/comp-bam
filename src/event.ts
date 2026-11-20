@@ -8,10 +8,15 @@ const seat = z.object({
   room: z.number(),
   round_no: z.number(),
 });
-const question = z.object({
+const publicQuestion = z.object({
   id: z.string(),
   body: z.string(),
+  state: z.enum(["pending", "answered"]),
+  cohort,
+});
+const staffQuestion = publicQuestion.extend({
   state: z.enum(["pending", "answered", "hidden"]),
+  cohort: cohort.nullable(),
 });
 const table = z.object({
   num: z.number(),
@@ -24,6 +29,7 @@ const snapshot = z.object({
   open: z.boolean(),
   ended: z.boolean(),
   tables: z.array(table),
+  questions: z.array(publicQuestion),
   draws: z.array(z.object({ seq: z.number(), num: z.number() })),
   me: member
     .extend({ room: z.number().nullable(), card: z.string().nullable() })
@@ -32,7 +38,7 @@ const snapshot = z.object({
     .object({
       members: z.array(member),
       history: z.array(seat),
-      questions: z.array(question),
+      questions: z.array(staffQuestion),
     })
     .optional(),
 });
@@ -89,7 +95,7 @@ export async function readEvent() {
 }
 export const checkIn = (value: Cohort) => rpc("check_in", { cohort: value });
 export const sendQuestion = (id: string, body: string) =>
-  rpc("send_question", { request_id: id, body });
+  rpc("send_public_question", { request_id: id, body });
 type Commands = {
   round: { expected: number; seats: { num: number; room: number }[] };
   draw: { expected: number };

@@ -25,64 +25,60 @@ function requestId() {
     str.slice(20),
   ].join("-");
 }
-function Questions({ event, run, busy }: Props) {
+function QuestionForm({ event, run, busy }: Props) {
   const [draft, setDraft] = useState(""),
     [sent, setSent] = useState(false);
   const id = useRef("");
-  if (!event.open || event.ended)
-    return (
-      <>
-        <PassHeading label="QUESTION SLIP" title="익명 Q&A" />
-        <p className="status">지금은 질문을 받지 않아요.</p>
-      </>
-    );
+  if (event.ended || !event.open)
+    return <p className="status">지금은 질문을 받지 않아요.</p>;
+  if (!event.me)
+    return <p className="status">행사에 입장하면 질문을 남길 수 있어요.</p>;
+  if (!event.me.active)
+    return <p className="status">퇴장 후에는 질문을 읽을 수 있어요.</p>;
   if (sent)
     return (
       <>
-        <PassHeading label="QUESTION SLIP" title="익명 Q&A" />
         <section className="wash stamped">
-          <h2>질문을 보냈어요.</h2>
+          <h2>질문을 게시했어요.</h2>
           <p>운영진이 현장에서 답변할 예정이에요.</p>
         </section>
         <button onClick={() => setSent(false)}>다른 질문 작성</button>
       </>
     );
   return (
-    <>
-      <PassHeading label="QUESTION SLIP" title="익명 Q&A" />
-      <p>운영진만 질문을 읽고 현장에서 답해요.</p>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (!draft.trim()) return;
-          id.current ||= requestId();
-          if (await run(() => sendQuestion(id.current, draft.trim()))) {
-            setSent(true);
-            setDraft("");
-            id.current = "";
-          }
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (!draft.trim()) return;
+        id.current ||= requestId();
+        if (await run(() => sendQuestion(id.current, draft.trim()))) {
+          setSent(true);
+          setDraft("");
+          id.current = "";
+        }
+      }}
+    >
+      <label htmlFor="question">질문 내용</label>
+      <textarea
+        id="question"
+        maxLength={500}
+        rows={5}
+        disabled={busy}
+        required
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          id.current = "";
         }}
-      >
-        <label htmlFor="question">질문 내용</label>
-        <textarea
-          id="question"
-          maxLength={500}
-          rows={5}
-          disabled={busy}
-          required
-          value={draft}
-          onChange={(e) => {
-            setDraft(e.target.value);
-            id.current = "";
-          }}
-          placeholder="운영진에게 궁금한 점을 적어 주세요."
-        />
-        <p className="muted">참가번호와 OB/YB는 질문에 표시되지 않아요.</p>
-        <button className="primary" disabled={!draft.trim() || busy}>
-          익명으로 질문 보내기
-        </button>
-      </form>
-    </>
+        placeholder="운영진에게 궁금한 점을 적어 주세요."
+      />
+      <p className="muted">
+        모두가 이 질문을 읽을 수 있어요. 작성자는 ‘{event.me.cohort} 익명’으로 표시돼요.
+      </p>
+      <button className="primary" disabled={!draft.trim() || busy}>
+        공개 질문 올리기
+      </button>
+    </form>
   );
 }
 export function Participant({ event, run, busy }: Props) {
@@ -101,7 +97,25 @@ export function Participant({ event, run, busy }: Props) {
         )}
       </Masthead>
       <main key={tab}>
-        {!me ? (
+        {tab === "익명 Q&A" ? (
+          <>
+            <PassHeading label="QUESTION SLIP" title="익명 Q&A" />
+            <QuestionForm event={event} run={run} busy={busy} />
+            <section className="question-feed" aria-label="모두의 질문">
+              <h2>모두의 질문</h2>
+              {event.questions.length === 0 && <p>아직 공개된 질문이 없어요.</p>}
+              {event.questions.map((q) => (
+                <article key={q.id}>
+                  <div className="question-meta">
+                    <strong>{q.cohort} 익명</strong>
+                    <span>{q.state === "answered" ? "답변 완료" : "답변 대기"}</span>
+                  </div>
+                  <p>{q.body}</p>
+                </article>
+              ))}
+            </section>
+          </>
+        ) : !me ? (
           event.ended ? (
             <PassHeading label="BOX OFFICE CLOSED" title="행사가 종료되었어요." />
           ) : (
@@ -133,12 +147,6 @@ export function Participant({ event, run, busy }: Props) {
                 입장권 발급 · 참가번호 받기
               </button>
             </>
-          )
-        ) : tab === "익명 Q&A" ? (
-          !me.active ? (
-            <PassHeading label="CHECKED OUT" title="퇴장 처리되었어요." />
-          ) : (
-            <Questions event={event} run={run} busy={busy} />
           )
         ) : tab === "럭키 드로우" ? (
           <>
@@ -186,6 +194,14 @@ export function Participant({ event, run, busy }: Props) {
           </>
         )}
       </main>
+      {!me && (
+        <button
+          className="guest-questions"
+          onClick={() => setTab(tab === "익명 Q&A" ? "내 자리" : "익명 Q&A")}
+        >
+          {tab === "익명 Q&A" ? "입장 화면으로" : "익명 Q&A 보기"}
+        </button>
+      )}
       {me && (
         <nav className="bottom" aria-label="참가자 메뉴">
           {tabs.map((t) => (

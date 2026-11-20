@@ -197,22 +197,27 @@ export function Host({ event, staff, run, busy }: Props) {
               .filter((q) => q.state === filter)
               .map((q) => (
                 <article key={q.id}>
+                  <strong className="question-author">
+                    {q.cohort ? `${q.cohort} 익명` : "운영진 전용 · 익명"}
+                  </strong>
                   <p>{q.body}</p>
-                  {q.state === "pending" && (
+                  {q.state !== "hidden" && (
                     <div className="actions">
-                      <button
-                        disabled={disabled}
-                        onClick={() =>
-                          run(() =>
-                            operate("moderate", {
-                              id: q.id,
-                              state: "answered",
-                            }),
-                          )
-                        }
-                      >
-                        답변 완료
-                      </button>
+                      {q.state === "pending" && (
+                        <button
+                          disabled={disabled}
+                          onClick={() =>
+                            run(() =>
+                              operate("moderate", {
+                                id: q.id,
+                                state: "answered",
+                              }),
+                            )
+                          }
+                        >
+                          답변 완료
+                        </button>
+                      )}
                       <button
                         disabled={disabled}
                         onClick={() =>

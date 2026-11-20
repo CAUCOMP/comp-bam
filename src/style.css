@@ -240,6 +240,13 @@ form .muted { margin: 8px 0 17px; }
 .qr { text-align: center; background: var(--tint); }
 .qr h2 { margin: 0; }
 .qr svg, .qr a { display: block; margin: 10px auto; max-width: 100%; }
+.guest-questions { margin-top: 16px; }
+.question-feed { margin-top: 24px; }
+.question-feed h2 { margin-bottom: 12px; }
+.question-feed article { padding: 14px 0; border-top: 1px dashed var(--line); }
+.question-feed article p { white-space: pre-wrap; }
+.question-meta { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.question-author, .question-meta { color: var(--green); font-size: 14px; }
 .claim-ticket { margin-top: 18px; border-block: 2px dashed var(--green); padding: 12px 6px; }
 .claim-ticket strong { font: 700 26px/1 var(--mono); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
