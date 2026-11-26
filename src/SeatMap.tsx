@@ -1,6 +1,14 @@
 import { numberLabel } from "./event";
 import type { Table } from "./event";
 
+function Chairs({ count }: { count: number }) {
+  return (
+    <div className="chairs" aria-hidden="true">
+      {Array.from({ length: count }, (_, index) => <i key={index} />)}
+    </div>
+  );
+}
+
 export function SeatMap({
   tables,
   current,
@@ -21,15 +29,9 @@ export function SeatMap({
             className={"table-symbol" + (current === t.num ? " selected" : "")}
             key={t.num}
           >
-            <div className="chairs" aria-hidden="true">
-              <i />
-              <i />
-            </div>
+            <Chairs count={Math.ceil(t.capacity / 2)} />
             <strong>{numberLabel(t.num, 2)}</strong>
-            <div className="chairs" aria-hidden="true">
-              <i />
-              <i />
-            </div>
+            <Chairs count={Math.floor(t.capacity / 2)} />
           </div>
         ))}
       </div>
