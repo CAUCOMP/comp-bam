@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { numberLabel, operate } from "./event";
+import { numberLabel, operate, resetEvent } from "./event";
 import type { EventState, Staff } from "./event";
 import type { Action } from "./main";
 import { assign } from "./assign";
@@ -13,6 +13,14 @@ const panels: Panel[] = ["현장 진행", "익명 Q&A", "럭키 드로우"];
 
 export function Host({ event, staff, run, busy }: Props) {
   const [panel, setPanel] = useState<Panel>("현장 진행");
+  const counts = {
+    members: staff.members.length,
+    rounds: event.round,
+    draws: event.draws.length,
+    questions: staff.questions.length,
+  };
+  const [resetCounts, setResetCounts] = useState(counts);
+  const resetDialog = useRef<HTMLDialogElement>(null);
   const [qr, setQr] = useState(false);
   const [filter, setFilter] =
     useState<Staff["questions"][number]["state"]>("pending");
@@ -97,7 +105,7 @@ export function Host({ event, staff, run, busy }: Props) {
               }
               onClick={() =>
                 run(() =>
-                  operate("round", {
+                  operate(event.generation, "round", {
                     expected: event.round,
                     seats: assign(staff, event.tables),
                   }),
@@ -150,7 +158,7 @@ export function Host({ event, staff, run, busy }: Props) {
                                 numberLabel(m.num) + "번을 퇴장 처리할까요?",
                               )
                             )
-                              void run(() => operate("depart", { num: m.num }));
+                              void run(() => operate(event.generation, "depart", { num: m.num }));
                           }}
                         >
                           퇴장 처리
@@ -172,7 +180,7 @@ export function Host({ event, staff, run, busy }: Props) {
               <button
                 disabled={disabled}
                 onClick={() =>
-                  run(() => operate("reception", { open: !event.open }))
+                  run(() => operate(event.generation, "reception", { open: !event.open }))
                 }
               >
                 {event.open ? "접수 마감" : "접수 열기"}
@@ -208,7 +216,7 @@ export function Host({ event, staff, run, busy }: Props) {
                           disabled={disabled}
                           onClick={() =>
                             run(() =>
-                              operate("moderate", {
+                              operate(event.generation, "moderate", {
                                 id: q.id,
                                 state: "answered",
                               }),
@@ -222,7 +230,7 @@ export function Host({ event, staff, run, busy }: Props) {
                         disabled={disabled}
                         onClick={() =>
                           run(() =>
-                            operate("moderate", { id: q.id, state: "hidden" }),
+                            operate(event.generation, "moderate", { id: q.id, state: "hidden" }),
                           )
                         }
                       >
@@ -252,7 +260,7 @@ export function Host({ event, staff, run, busy }: Props) {
                     )
                   )
                     void run(() =>
-                      operate("draw", { expected: event.draws.length }),
+                      operate(event.generation, "draw", { expected: event.draws.length }),
                     );
                 }}
               >
@@ -282,11 +290,43 @@ export function Host({ event, staff, run, busy }: Props) {
                   "행사를 종료할까요? 이후 입장, 질문, 배정과 추첨이 마감됩니다.",
                 )
               )
-                void run(() => operate("end", {}));
+                void run(() => operate(event.generation, "end", {}));
             }}
           >
             행사 종료
           </button>
+          <button
+            type="button"
+            disabled={busy}
+            aria-haspopup="dialog"
+            onClick={() => {
+              setResetCounts(counts);
+              resetDialog.current?.showModal();
+            }}
+          >
+            행사 초기화
+          </button>
+          <dialog className="ticket-preview" ref={resetDialog} aria-labelledby="reset-title">
+            <h2 id="reset-title">행사를 초기화할까요?</h2>
+            <p>참가자 {resetCounts.members}명(퇴장자 포함), {resetCounts.rounds}개 라운드의 배정 기록,
+              당첨 기록 {resetCounts.draws}건, 익명 질문 {resetCounts.questions}건을 삭제합니다.
+              삭제한 기록은 복구할 수 없습니다.</p>
+            <p>테이블, 대화 카드, 운영진 링크는 계속 사용합니다.
+              다음 참가번호는 001번이며, 질문 접수는 닫힌 상태로 시작합니다.</p>
+            <div className="actions">
+              <button type="button" autoFocus onClick={() => resetDialog.current?.close()}>취소</button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  resetDialog.current?.close();
+                  void run(() => resetEvent(event.generation, resetCounts));
+                }}
+              >
+                기록 삭제하고 초기화
+              </button>
+            </div>
+          </dialog>
         </footer>
       </main>
     </>

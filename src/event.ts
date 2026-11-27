@@ -24,6 +24,7 @@ const table = z.object({
   directions: z.string(),
 });
 const snapshot = z.object({
+  generation: z.number().int().nonnegative(),
   title: z.string(),
   round: z.number(),
   open: z.boolean(),
@@ -112,6 +113,12 @@ type Commands = {
   depart: { num: number };
 };
 export const operate = <K extends keyof Commands>(
+  generation: number,
   action: K,
   payload: Commands[K],
-) => rpc("host_action", { action, payload });
+) => rpc("host_action", { action, payload: { ...payload, generation } });
+
+export const resetEvent = (
+  generation: number,
+  counts: { members: number; rounds: number; draws: number; questions: number },
+) => rpc("reset_event", { expected_generation: generation, expected_counts: counts });

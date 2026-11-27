@@ -129,9 +129,9 @@ function App() {
     <div className={"shell" + (hostPage ? " host" : "")}>
       {notice}
       {hostPage && event.staff ? (
-        <Host event={event} staff={event.staff} run={run} busy={busy} />
+        <Host key={event.generation} event={event} staff={event.staff} run={run} busy={busy} />
       ) : (
-        <Participant event={event} run={run} busy={busy} />
+        <Participant key={event.generation} event={event} run={run} busy={busy} />
       )}
     </div>
   );

@@ -231,7 +231,7 @@ form .muted { margin: 8px 0 17px; }
 .host li { border-bottom: 1px dashed var(--line); padding: 9px 0; font-variant-numeric: tabular-nums; }
 .host li span { color: var(--muted); font-size: 14px; }
 .host small { font-weight: 400; }
-.host footer { margin-top: 40px; border-top: 1px dashed var(--line); padding-top: 16px; }
+.host footer { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 40px; border-top: 1px dashed var(--line); padding-top: 16px; }
 .host footer button { color: #783b2a; }
 .filters, .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .filters { margin: 16px 0; }
@@ -351,6 +351,7 @@ form .muted { margin: 8px 0 17px; }
   border: var(--rule);
   border-radius: 12px;
 }
+.ticket-preview p + p { margin-top: 12px; }
 .ticket-preview::backdrop { background: rgb(25 46 36 / 65%); }
 .host .ticket-preview h2 { margin: 0 0 14px; }
 .ticket-preview .actions { margin-top: 16px; justify-content: flex-end; }
