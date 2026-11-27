@@ -4,6 +4,15 @@ function pair(a: number, b: number) {
   return Math.min(a, b) + "/" + Math.max(a, b);
 }
 
+function shuffled<T>(items: T[]) {
+  const order = [...items];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
+}
+
 export function assign(staff: Staff, tables: Table[]) {
   const members = staff.members.filter((m) => m.active);
   if (!members.length) throw new Error("배정할 참가자가 없어요.");
@@ -31,53 +40,42 @@ export function assign(staff: Staff, tables: Table[]) {
     group.push(seat.num);
     groups.set(key, group);
   }
-  const ratio =
-    members.filter((m) => m.cohort === "OB").length / members.length;
-  let bestRepeat = Infinity,
-    bestMix = Infinity;
+  const ob = members.filter((m) => m.cohort === "OB");
+  const yb = members.filter((m) => m.cohort === "YB");
+  let bestRepeat = Infinity;
   let best: { num: number; room: number }[] = [];
   for (let attempt = 0; attempt < 96; attempt++) {
-    const order = [...members];
-    for (let i = order.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [order[i], order[j]] = [order[j], order[i]];
-    }
-    const seats = used.map((table) => ({ table, nums: [] as number[], ob: 0 }));
+    const seats = shuffled(used).map((table) => {
+      const nums: number[] = [];
+      return { table, nums, yb: 0 };
+    });
     let repeats = 0;
-    for (const member of order) {
-      const available = seats.filter((s) => s.nums.length < s.table.capacity);
-      const score = (s: (typeof seats)[number]) => {
-        const repeat = s.nums.reduce(
-          (sum, n) => sum + (encounters.get(pair(n, member.num)) ?? 0),
-          0,
+    // Seat OB first so a repeat encounter can never force two OB together
+    // while another available table has fewer OB.
+    for (const member of [...shuffled(ob), ...shuffled(yb)]) {
+      const [chosen] = seats
+        .filter((s) => s.nums.length < s.table.capacity)
+        .map((seat) => ({
+          seat,
+          repeat: seat.nums.reduce(
+            (sum, n) => sum + (encounters.get(pair(n, member.num)) ?? 0), 0,
+          ),
+        }))
+        .sort((a, b) =>
+          a.seat.nums.length - b.seat.nums.length ||
+          a.seat.yb - b.seat.yb ||
+          a.repeat - b.repeat,
         );
-        const deviation = Math.abs(
-          s.ob + Number(member.cohort === "OB") - (s.nums.length + 1) * ratio,
-        );
-        return { repeat, deviation };
-      };
-      available.sort(
-        (a, b) =>
-          a.nums.length - b.nums.length ||
-          score(a).repeat - score(b).repeat ||
-          score(a).deviation - score(b).deviation,
-      );
-      const chosen = available[0];
-      repeats += score(chosen).repeat;
-      chosen.nums.push(member.num);
-      chosen.ob += Number(member.cohort === "OB");
+      repeats += chosen.repeat;
+      chosen.seat.nums.push(member.num);
+      if (member.cohort === "YB") chosen.seat.yb++;
     }
-    const mix = seats.reduce(
-      (sum, s) => sum + Math.abs(s.ob - s.nums.length * ratio),
-      0,
-    );
-    if (repeats < bestRepeat || (repeats === bestRepeat && mix < bestMix)) {
+    if (repeats < bestRepeat) {
       bestRepeat = repeats;
-      bestMix = mix;
       best = seats.flatMap((s) =>
         s.nums.map((num) => ({ num, room: s.table.num })),
       );
-      if (!mix && !repeats) break;
+      if (!repeats) break;
     }
   }
   return best;

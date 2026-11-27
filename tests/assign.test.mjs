@@ -52,3 +52,28 @@ test("two people share one table", () => {
   const seats = assign({ ...staff, members: members.slice(0, 2) }, tables);
   assert.equal(seats[0].room, seats[1].room);
 });
+
+test("spreads OB across eight tables even when meeting history favors grouping them", () => {
+  const rooms = Array.from({ length: 8 }, (_, i) => ({ num: i + 1, capacity: 4, directions: "" }));
+  for (const obCount of [3, 8, 10]) {
+    const roster = Array.from({ length: 30 }, (_, i) => ({
+      num: i + 1, cohort: i < obCount ? "OB" : "YB", active: true,
+    }));
+    // Each OB has previously shared a table with every YB.
+    const history = [];
+    for (const ob of roster.slice(0, obCount)) {
+      for (const yb of roster.slice(obCount)) {
+        const round_no = history.length / 2 + 1;
+        history.push({ num: ob.num, room: 1, round_no }, { num: yb.num, room: 1, round_no });
+      }
+    }
+    const plan = assign({ ...staff, members: roster, history }, rooms);
+    assert.deepEqual(plan.map(s => s.num).sort((a, b) => a - b), roster.map(m => m.num));
+    for (const room of rooms) {
+      const group = plan.filter(s => s.room === room.num);
+      const ob = group.filter(s => s.num <= obCount).length;
+      assert.ok(ob === Math.floor(obCount / 8) || ob === Math.ceil(obCount / 8));
+      assert.ok(group.length === 3 || group.length === 4);
+    }
+  }
+});
