@@ -216,6 +216,7 @@ form .muted { margin: 8px 0 17px; }
 .winning { background: var(--tint); font-weight: 700; }
 .host-tabs { border: var(--rule); border-radius: 9px; overflow: hidden; margin-top: 18px; }
 .host-tabs button:focus-visible { outline-offset: -4px; }
+.host-login input { width: 100%; min-height: 44px; padding: 8px 12px; margin-bottom: 14px; border: 1.5px solid var(--ink); border-radius: 6px; background: var(--paper); }
 .heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
 .heading .pass-heading { flex: 1; margin: 0; }
 .heading > span, .setting span { font-size: 14px; font-weight: 700; color: var(--green); }
@@ -357,12 +358,19 @@ form .muted { margin: 8px 0 17px; }
   .printing, .printing .winner-stamp { animation-name: none; }
 }
 @media (max-width: 650px) {
-  .host-grid { grid-template-columns: 1fr; gap: 0; }
+  .host-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .host-grid .roster { grid-row: 1; }
+  .host-tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; }
+  .host .masthead { flex-wrap: wrap; }
+  .host .masthead button { margin-left: auto; }
+  .table-assignments li { flex-wrap: wrap; }
   .metrics small { font-size: 12px; }
   .heading { flex-wrap: wrap; }
   .heading .pass-heading { flex-basis: 100%; }
 }
 @media (max-width: 360px) {
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 8px; }
+  .metrics > div:nth-child(3) { border-left: 0; }
   .masthead strong { font-size: 18px; }
   .masthead { gap: 5px; }
   .masthead .operator { font-size: 12px; }

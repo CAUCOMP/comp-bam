@@ -49,7 +49,6 @@ export type Table = z.infer<typeof table>;
 export const numberLabel = (num: number, digits = 3) =>
   String(num).padStart(digits, "0");
 export const hostPage = location.pathname.replace(/\/$/, "") === "/admin";
-const hostSecret = new URLSearchParams(location.hash.slice(1)).get("key");
 const endpoint = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const client =
@@ -79,18 +78,26 @@ async function connect() {
     const login = await client.auth.signInAnonymously();
     if (login.error) throw login.error;
   }
-  if (hostPage && hostSecret) {
-    await rpc("claim_host", { secret: hostSecret });
-    history.replaceState(null, "", location.pathname + location.search);
-  }
 }
 
-export async function readEvent() {
+function ensureSession() {
   initialized ??= connect().catch((error) => {
     initialized = undefined;
     throw error;
   });
-  await initialized;
+  return initialized;
+}
+
+export async function claimHost(secret: string) {
+  await ensureSession();
+  await rpc("claim_host", { secret });
+  history.replaceState(null, "", location.pathname + location.search);
+}
+
+export async function readEvent() {
+  await ensureSession();
+  const hostSecret = new URLSearchParams(location.hash.slice(1)).get("key");
+  if (hostPage && hostSecret) await claimHost(hostSecret);
   return snapshot.parse(await rpc("event_state", { host_view: hostPage }));
 }
 export const checkIn = (value: Cohort) => rpc("check_in", { cohort: value });

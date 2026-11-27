@@ -112,7 +112,7 @@ export function Host({ event, staff, run, busy }: Props) {
               </p>
             )}
             <div className="host-grid">
-              <section>
+              <section className="table-assignments">
                 <h2>테이블 배정</h2>
                 <SeatMap tables={event.tables} />
                 <ul>
@@ -132,7 +132,7 @@ export function Host({ event, staff, run, busy }: Props) {
                   ))}
                 </ul>
               </section>
-              <section>
+              <section className="roster">
                 <h2>참가자 명단</h2>
                 {!staff.members.length && <p>첫 체크인을 기다리고 있어요.</p>}
                 <ul>
