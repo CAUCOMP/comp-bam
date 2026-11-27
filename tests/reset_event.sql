@@ -1,5 +1,8 @@
--- Run against a disposable DB after applying all migrations.
+-- Run as postgres on a disposable Supabase DB after applying all migrations.
+-- Match the statement guard enabled for hosted API requests.
+load 'safeupdate';
 begin;
+alter table bam.members alter column num restart with 1;
 insert into bam.hosts(owner) values ('00000000-0000-4000-8000-000000000001');
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002';
 set local role authenticated;
